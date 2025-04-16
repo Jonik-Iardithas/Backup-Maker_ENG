@@ -92,6 +92,8 @@ $Icons_List = @{
     Replace   = "$env:windir\system32\shell32.dll|295"
 }
 
+$Synopsis_List = @($null,$null,("NO","ALL"),("NOT BE DELETED","BE DELETED"),("NOT BE REPLACED","BE REPLACED"),("NOT BE RESET","BE RESET"),("DO NOT","DO"),("NOT","ALSO"),("NOT","ALSO"),("WILL NOT BE","WILL BE"))
+
 $Synopsis = "Source directory: {0}" + $NL +
             "Destination directory: {1}" + $NL + $NL +
             "{2} FILES are about to be copied from source directory to destination directory." + $NL +
@@ -959,22 +961,27 @@ function Reverse-Me ([object]$Button, [object]$TextBox, [string]$Path)
 
 # -------------------------------------------------------------
 
-function Fill-Synopsis ([string]$Synopsis, [string]$SrcPath, [string]$DstPath, [bool]$Copy, [bool]$Remove, [bool]$Replace, [bool]$Attributes, [bool]$Sub, [bool]$HiddenF, [bool]$HiddenD, [bool]$OutFile)
+function Fill-Synopsis ([string]$Synopsis, [array]$List, [string]$SrcPath, [string]$DstPath, [bool]$Copy, [bool]$Remove, [bool]$Replace, [bool]$Attributes, [bool]$Sub, [bool]$HiddenF, [bool]$HiddenD, [bool]$OutFile)
     {
-        $Var01 = $SrcPath
-        $Var02 = $DstPath
-        If ($Copy)       {$Var03 = "ALL"}         Else {$Var03 = "NO"}
-        If ($Remove)     {$Var04 = "BE DELETED"}  Else {$Var04 = "NOT BE DELETED"}
-        If ($Replace)    {$Var05 = "BE REPLACED"} Else {$Var05 = "NOT BE REPLACED"}
-        If ($Attributes) {$Var06 = "BE RESET"}    Else {$Var06 = "NOT BE RESET"}
-        If ($Sub)        {$Var07 = "DO"}          Else {$Var07 = "DO NOT"}
-        If ($HiddenF)    {$Var08 = "ALSO"}        Else {$Var08 = "NOT"}
-        If ($HiddenD)    {$Var09 = "ALSO"}        Else {$Var09 = "NOT"}
-        If ($OutFile)    {$Var10 = "WILL BE"}     Else {$Var10 = "WILL NOT BE"}
+        $Table = @{
+            2 = $Copy
+            3 = $Remove
+            4 = $Replace
+            5 = $Attributes
+            6 = $Sub
+            7 = $HiddenF
+            8 = $HiddenD
+            9 = $OutFile
+        }
 
-        $Synopsis = $Synopsis -f $Var01, $Var02, $Var03 ,$Var04 ,$Var05, $Var06, $Var07, $Var08, $Var09, $Var10
+        $Var = @($SrcPath,$DstPath)
 
-        return $Synopsis
+        For($i = 2; $i -lt $List.Count; $i++)
+            {
+                $Var += @($List[$i][[int]$Table[$i]])
+            }
+
+        return $Synopsis -f $Var
     }
 
 # =============================================================
@@ -1503,7 +1510,7 @@ $ar_Events = @(
                         $Form.TopMost = $false
                         $this.TopMost = $true
                         $this.ActiveControl = $bt_Cancel
-                        $tb_Synopsis.Text = Fill-Synopsis -Synopsis $Synopsis -SrcPath $Global:SourcePath -DstPath $Global:DestinationPath -Copy $clb_Box.GetItemChecked(0) -Remove $clb_Box.GetItemChecked(1) -Replace $clb_Box.GetItemChecked(2) -Attributes $clb_Box.GetItemChecked(3) -Sub $clb_Box.GetItemChecked(4) -HiddenF $clb_Box.GetItemChecked(5) -HiddenD $clb_Box.GetItemChecked(6) -OutFile $clb_Box.GetItemChecked(7)
+                        $tb_Synopsis.Text = Fill-Synopsis -Synopsis $Synopsis -List $Synopsis_List -SrcPath $Global:SourcePath -DstPath $Global:DestinationPath -Copy $clb_Box.GetItemChecked(0) -Remove $clb_Box.GetItemChecked(1) -Replace $clb_Box.GetItemChecked(2) -Attributes $clb_Box.GetItemChecked(3) -Sub $clb_Box.GetItemChecked(4) -HiddenF $clb_Box.GetItemChecked(5) -HiddenD $clb_Box.GetItemChecked(6) -OutFile $clb_Box.GetItemChecked(7)
                     })}
                 {Add_FormClosed({$Form.TopMost = $true})}
               )
