@@ -33,7 +33,7 @@ $L_Ptr = [System.IntPtr]::new(0)
 $S_Ptr = [System.IntPtr]::new(0)
 
 $Msg_List = @{
-    Start        = "Backup Maker started."
+    Start        = "Backup-Maker started."
     NoDir        = "No valid directory name."
     NoIdent      = "Source and destination must not be identical."
     NoParent     = "Source and destination must not have the same root-directory."
@@ -52,7 +52,7 @@ $Msg_List = @{
 }
 
 $Txt_List = @{
-    Form           = "Backup Maker"
+    Form           = "Backup-Maker"
     Copy_Form      = "Task Form"
     DiskSpace_Form = "Notification Form"
     lb_DiskSpace   = "Not enough disk space for the following operation:" + $NL + $NL +
@@ -80,7 +80,7 @@ $Tooltips_List = @{
 
 $MessageBoxes_List = @{
     Initialize_Msg_01  = "Unable to locate file {0}"
-    Initialize_Msg_02  = "Backup Maker: Error!"
+    Initialize_Msg_02  = "Backup-Maker: Error!"
     FormClosing_Msg_01 = "The backup process is not yet completed. Do you really want to quit (not recommended)?"
     FormClosing_Msg_02 = "Attention!"
 }
