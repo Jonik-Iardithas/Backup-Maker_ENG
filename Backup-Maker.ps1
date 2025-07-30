@@ -73,15 +73,15 @@ $Txt_List = @{
     NewFolder      = "Please enter folder name. Press 'return' to confirm."
 }
 
-$Tooltips_List = @{
+$TT_List = @{
     NewFolder = "Click to create new folder"
 }
 
-$MessageBoxes_List = @{
-    Initialize_Msg_01  = "Unable to locate file {0}"
-    Initialize_Msg_02  = "Backup-Maker: Error!"
-    FormClosing_Msg_01 = "The backup process is not yet completed. Do you really want to quit (not recommended)?"
-    FormClosing_Msg_02 = "Attention!"
+$MB_List = @{
+    Ini_01  = "Unable to locate file {0}"
+    Ini_02  = "Backup-Maker: Error!"
+    Close_01 = "The backup process is not yet completed. Do you really want to quit (not recommended)?"
+    Close_02 = "Attention!"
 }
 
 $Icons_List = @{
@@ -127,7 +127,7 @@ function Initialize-Me ([string]$FilePath)
     {
         If (!(Test-Path -Path $FilePath))
             {
-                [System.Windows.Forms.MessageBox]::Show(($MessageBoxes_List.Initialize_Msg_01 -f $FilePath),$MessageBoxes_List.Initialize_Msg_02,0)
+                [System.Windows.Forms.MessageBox]::Show(($MB_List.Ini_01 -f $FilePath),$MB_List.Ini_02,0)
                 Exit
             }
 
@@ -147,9 +147,20 @@ function Create-Object ([string]$Name, [string]$Type, [HashTable]$Data, [array]$
     {
         New-Variable -Name $Name -Value (New-Object -TypeName System.Windows.Forms.$Type) -Scope Global -Force
 
-        ForEach ($k in $Data.Keys) {Invoke-Expression ("`$$Name.$k = " + {$Data.$k})}
-        ForEach ($i in $Events)    {Invoke-Expression ("`$$Name.$i")}
-        If ($Control)              {Invoke-Expression ("`$$Control.Controls.Add(`$$Name)")}
+        ForEach ($k in $Data.Keys)
+            {
+                Invoke-Expression -Command ("`$$Name.$k = " + {$Data.$k})
+            }
+
+        ForEach ($i in $Events)
+            {
+                Invoke-Expression -Command ("`$$Name.$i")
+            }
+
+        If ($Control)
+            {
+                Invoke-Expression -Command ("`$$Control.Controls.Add(`$$Name)")
+            }
     }
 
 # -------------------------------------------------------------
@@ -1017,7 +1028,7 @@ $ar_Events = @(
                     {
                         If (Get-Runspace -Name $RSList)
                             {
-                                If ([System.Windows.Forms.MessageBox]::Show($MessageBoxes_List.FormClosing_Msg_01,$MessageBoxes_List.FormClosing_Msg_02,4) -eq [System.Windows.Forms.DialogResult]::No)
+                                If ([System.Windows.Forms.MessageBox]::Show($MB_List.Close_01,$MB_List.Close_02,4) -eq [System.Windows.Forms.DialogResult]::No)
                                     {
                                         $_.Cancel = $true
                                     }
@@ -1191,7 +1202,7 @@ $ar_Events = @(
                     })}
                 {Add_MouseHover(
                     {
-                        $Tooltip.SetToolTip($this,$Tooltips_List.NewFolder)
+                        $Tooltip.SetToolTip($this,$TT_List.NewFolder)
                     })}
               )
 
@@ -1484,9 +1495,7 @@ Create-Object -Name bt_All -Type Button -Data $ht_Data -Events $ar_Events -Contr
 $ht_Data.Left = $Form.ClientSize.Width - $ButtonSizeA.Width - 30
 $ht_Data.Text = $Txt_List.bt_Exit
 
-$ar_Events = @(
-                {Add_Click({$Form.Close()})}
-              )
+$ar_Events = @({Add_Click({$Form.Close()})})
 
 Create-Object -Name bt_Exit -Type Button -Data $ht_Data -Events $ar_Events -Control Form
 
