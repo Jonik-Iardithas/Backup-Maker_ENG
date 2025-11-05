@@ -135,7 +135,10 @@ function Initialize-Me ([string]$FilePath)
 
         ForEach ($i in $Data)
             {
-                $ht_Result += @{$i.Split("=")[0].Trim() = $i.Split("=")[-1].Trim()}
+                If ($i.Contains("="))
+                    {
+                        $ht_Result += @{$i.Split("=")[0].Trim() = $i.Split("=")[-1].Trim()}
+                    }
             }
 
         return $ht_Result
@@ -340,35 +343,35 @@ function Copy-Incremental ([HashTable]$SyncHash, [bool]$Copy, [bool]$Remove, [bo
                 $NL = [System.Environment]::NewLine
 
                 $Protocol_List = @{
-                                    CopyD      = "$NL[COPIED ITEMS - DIRECTORIES]$NL"
-                                    CopyF      = "$NL[COPIED ITEMS - FILES]$NL"
-                                    RemoveD    = "$NL[REMOVED ITEMS - DIRECTORIES]$NL"
-                                    RemoveF    = "$NL[REMOVED ITEMS - FILES]$NL"
-                                    ReplaceD   = "$NL[REPLACED ITEMS - DIRECTORIES]$NL"
-                                    ReplaceF   = "$NL[REPLACED ITEMS - FILES]$NL"
-                                  }
+                    CopyD      = "$NL[COPIED ITEMS - DIRECTORIES]$NL"
+                    CopyF      = "$NL[COPIED ITEMS - FILES]$NL"
+                    RemoveD    = "$NL[REMOVED ITEMS - DIRECTORIES]$NL"
+                    RemoveF    = "$NL[REMOVED ITEMS - FILES]$NL"
+                    ReplaceD   = "$NL[REPLACED ITEMS - DIRECTORIES]$NL"
+                    ReplaceF   = "$NL[REPLACED ITEMS - FILES]$NL"
+                }
 
                 $Formatter = @{
-                                A = @{
-                                        RemoveD    = "{0}"
-                                        DirTotal   = "{0} Directories"
-                                     }
+                    A = @{
+                        RemoveD    = "{0}"
+                        DirTotal   = "{0} Directories"
+                    }
 
-                                B = @{
-                                        CopyD      = "{0} => {1}"
-                                        ReplaceD   = "{0} <= {1}"
-                                     }
+                    B = @{
+                        CopyD      = "{0} => {1}"
+                        ReplaceD   = "{0} <= {1}"
+                    }
 
-                                C = @{
-                                        CopyF      = "{0} => {1} {2} Bytes"
-                                        RemoveF    = "{0} == {1} {2} Bytes"
-                                        ReplaceF   = "{0} <= {1} {2} Bytes"
-                                     }
+                    C = @{
+                        CopyF      = "{0} => {1} {2} Bytes"
+                        RemoveF    = "{0} == {1} {2} Bytes"
+                        ReplaceF   = "{0} <= {1} {2} Bytes"
+                    }
 
-                                D = @{
-                                        FileTotal  = "{0} Files / {1} MB / {2} Bytes"
-                                     }
-                              }
+                    D = @{
+                        FileTotal  = "{0} Files / {1} MB / {2} Bytes"
+                    }
+                }
 
                 $Cmd_Src = 'Get-ChildItem -Path $SrcPath -File'
                 $Cmd_Dst = 'Get-ChildItem -Path $DstPath -File'
@@ -1006,45 +1009,47 @@ $IconMax = New-Object -TypeName System.Drawing.Size(($Icons.Values.Width | Measu
 # =============================================================
 
 $ht_Data = @{
-            ClientSize = [System.Drawing.Size]::new(600,560)
-            StartPosition = [System.Windows.Forms.FormStartPosition]::CenterScreen
-            Icon = $Paths.IconFolder + "Backup-Maker.ico"
-            Text = $Txt_List.Form
-            BackColor = $FormColor
-            FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::FixedSingle
-            MaximizeBox = $false
-            KeyPreview = $true
-            }
+    ClientSize = [System.Drawing.Size]::new(600,560)
+    StartPosition = [System.Windows.Forms.FormStartPosition]::CenterScreen
+    Icon = $Paths.IconFolder + "Backup-Maker.ico"
+    Text = $Txt_List.Form
+    BackColor = $FormColor
+    FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::FixedSingle
+    MaximizeBox = $false
+    KeyPreview = $true
+}
 
 $ar_Events = @(
-                {Add_Load(
-                    {
-                        $this.TopMost = $true
-                        $this.ActiveControl = $bt_Exit
-                        Clean-Up -List $RSList
-                        Write-Msg -TextBox $tb_Events -NL $false -Time $true -Count $false -Msg $Msg_List.Start
-                    })}
-                {Add_FormClosing(
-                    {
-                        If (Get-Runspace -Name $RSList)
-                            {
-                                If ([System.Windows.Forms.MessageBox]::Show($MB_List.Close_01,$MB_List.Close_02,4) -eq [System.Windows.Forms.DialogResult]::No)
-                                    {
-                                        $_.Cancel = $true
-                                    }
-                            }
+    {Add_Load(
+        {
+            $this.TopMost = $true
+            $this.ActiveControl = $bt_Exit
+            Clean-Up -List $RSList
+            Write-Msg -TextBox $tb_Events -NL $false -Time $true -Count $false -Msg $Msg_List.Start
+        }
+    )}
+    {Add_FormClosing(
+        {
+            If (Get-Runspace -Name $RSList)
+                {
+                    If ([System.Windows.Forms.MessageBox]::Show($MB_List.Close_01,$MB_List.Close_02,4) -eq [System.Windows.Forms.DialogResult]::No)
+                        {
+                            $_.Cancel = $true
+                        }
+                }
 
-                        If (!($_.Cancel))
-                            {
-                                $RS = Get-Runspace -Name ($RSList + "CleanUp")
-                                ForEach($i in $RS)
-                                    {
-                                        $i.Dispose()
-                                        [System.GC]::Collect()
-                                    }
-                            }
-                    })}
-              )
+            If (!($_.Cancel))
+                {
+                    $RS = Get-Runspace -Name ($RSList + "CleanUp")
+                    ForEach($i in $RS)
+                        {
+                            $i.Dispose()
+                            [System.GC]::Collect()
+                        }
+                }
+        }
+    )}
+)
 
 Create-Object -Name Form -Type Form -Data $ht_Data -Events $ar_Events
 
@@ -1057,13 +1062,13 @@ $SyncHash.Form = $Form
 # =============================================================
 
 $ht_Data = @{
-            Left = 10
-            Top = 10
-            Width = 200
-            Text = $Txt_List.lb_Source
-            Font = New-Object -TypeName System.Drawing.Font($FontName, $FontSize, $FontStyle)
-            TextAlign = [System.Drawing.ContentAlignment]::MiddleLeft
-            }
+    Left = 10
+    Top = 10
+    Width = 200
+    Text = $Txt_List.lb_Source
+    Font = New-Object -TypeName System.Drawing.Font($FontName, $FontSize, $FontStyle)
+    TextAlign = [System.Drawing.ContentAlignment]::MiddleLeft
+}
 
 Create-Object -Name lb_Source -Type Label -Data $ht_Data -Control Form
 
@@ -1101,54 +1106,56 @@ Create-Object -Name lb_Events -Type Label -Data $ht_Data -Control Form
 # =============================================================
 
 $ht_Data = @{
-            Left = 10
-            Top = $lb_Source.Bounds.Bottom
-            Width = $Form.ClientSize.Width - 50
-            Font = New-Object -TypeName System.Drawing.Font($FontName, $FontSize, $FontStyle)
-            Text = $Global:SourcePath
-            BackColor = $TextBoxColor
-            Cursor = [System.Windows.Forms.Cursors]::IBeam
-            ReadOnly = $true
-            }
+    Left = 10
+    Top = $lb_Source.Bounds.Bottom
+    Width = $Form.ClientSize.Width - 50
+    Font = New-Object -TypeName System.Drawing.Font($FontName, $FontSize, $FontStyle)
+    Text = $Global:SourcePath
+    BackColor = $TextBoxColor
+    Cursor = [System.Windows.Forms.Cursors]::IBeam
+    ReadOnly = $true
+}
 
 $ar_Events = @(
-                {Add_KeyDown(
-                    {
-                        If (!($this.Readonly))
-                            {
-                                If ($_.KeyCode -eq "Enter")
-                                    {
-                                        If (!(Test-Path -Path ($Global:SourcePath + "\" + $this.Text) -PathType Container) -and ($this.Text -ne $Txt_List.NewFolder))
-                                            {
-                                                New-Item -Path $Global:SourcePath -Name $this.Text -ItemType Directory
-                                                Write-Msg -TextBox $tb_Events -NL $true -Time $true -Count $false -Msg $Msg_List.NewFolder
-                                                Munition-ComboBox -Name $cb_Source -Path $Global:SourcePath
-                                            }
-                                        Else
-                                            {
-                                                Write-Msg -TextBox $tb_Events -NL $true -Time $true -Count $false -Msg $Msg_List.FailFolder
-                                            }
+    {Add_KeyDown(
+        {
+            If (!($this.Readonly))
+                {
+                    If ($_.KeyCode -eq "Enter")
+                        {
+                            If (!(Test-Path -Path ($Global:SourcePath + "\" + $this.Text) -PathType Container) -and ($this.Text -ne $Txt_List.NewFolder))
+                                {
+                                    New-Item -Path $Global:SourcePath -Name $this.Text -ItemType Directory
+                                    Write-Msg -TextBox $tb_Events -NL $true -Time $true -Count $false -Msg $Msg_List.NewFolder
+                                    Munition-ComboBox -Name $cb_Source -Path $Global:SourcePath
+                                }
+                            Else
+                                {
+                                    Write-Msg -TextBox $tb_Events -NL $true -Time $true -Count $false -Msg $Msg_List.FailFolder
+                                }
 
-                                        Reverse-Me -Button $bt_SourceNewFolder -TextBox $this -Path $Global:SourcePath
-                                    }
-                                ElseIf ($_.KeyCode -eq "Escape")
-                                    {
-                                        Reverse-Me -Button $bt_SourceNewFolder -TextBox $this -Path $Global:SourcePath
-                                    }
-                            }
-                    })}
-                {Add_Click(
-                    {
-                        If ($this.Readonly)
-                            {
-                                $this.SelectAll()
-                            }
-                        Else
-                            {
-                                $this.Clear()
-                            }
-                    })}
-              )
+                            Reverse-Me -Button $bt_SourceNewFolder -TextBox $this -Path $Global:SourcePath
+                        }
+                    ElseIf ($_.KeyCode -eq "Escape")
+                        {
+                            Reverse-Me -Button $bt_SourceNewFolder -TextBox $this -Path $Global:SourcePath
+                        }
+                }
+        }
+    )}
+    {Add_Click(
+        {
+            If ($this.Readonly)
+                {
+                    $this.SelectAll()
+                }
+            Else
+                {
+                    $this.Clear()
+                }
+        }
+    )}
+)
 
 Create-Object -Name tb_Source -Type TextBox -Data $ht_Data -Events $ar_Events -Control Form
 
@@ -1168,11 +1175,9 @@ $ht_Data.Height = $Form.ClientSize.Height - $lb_Events.Bounds.Bottom - 10
 $ht_Data.Width = $Form.ClientSize.Width - 20
 $ht_Data.Font = New-Object -TypeName System.Drawing.Font($FontName, ($FontSize - 1), $FontStyle)
 $ht_Data.Text = $null
-$ht_Data += @{
-             Multiline = $true
-             ScrollBars = [System.Windows.Forms.ScrollBars]::Vertical
-             WordWrap = $true
-             }
+$ht_Data.Multiline = $true
+$ht_Data.ScrollBars = [System.Windows.Forms.ScrollBars]::Vertical
+$ht_Data.WordWrap = $true
 
 Create-Object -Name tb_Events -Type TextBox -Data $ht_Data -Control Form
 
@@ -1185,26 +1190,28 @@ $SyncHash.tb_Events = $tb_Events
 # =============================================================
 
 $ht_Data = @{
-            Left = $tb_Source.Bounds.Right + 4
-            Top = $tb_Source.Bounds.Top
-            Size = $ButtonSizeB
-            FlatStyle = [System.Windows.Forms.FlatStyle]::Popup
-            BackColor = $ButtonColor
-            Image = $Icons.NewFolder
-            ImageAlign = [System.Drawing.ContentAlignment]::BottomCenter
-            Cursor = [System.Windows.Forms.Cursors]::Hand
-            }
+    Left = $tb_Source.Bounds.Right + 4
+    Top = $tb_Source.Bounds.Top
+    Size = $ButtonSizeB
+    FlatStyle = [System.Windows.Forms.FlatStyle]::Popup
+    BackColor = $ButtonColor
+    Image = $Icons.NewFolder
+    ImageAlign = [System.Drawing.ContentAlignment]::BottomCenter
+    Cursor = [System.Windows.Forms.Cursors]::Hand
+}
 
 $ar_Events = @(
-                {Add_Click(
-                    {
-                        Reverse-Me -Button $this -TextBox $tb_Source -Path $Global:SourcePath
-                    })}
-                {Add_MouseHover(
-                    {
-                        $Tooltip.SetToolTip($this,$TT_List.NewFolder)
-                    })}
-              )
+    {Add_Click(
+        {
+            Reverse-Me -Button $this -TextBox $tb_Source -Path $Global:SourcePath
+        }
+    )}
+    {Add_MouseHover(
+        {
+            $Tooltip.SetToolTip($this,$TT_List.NewFolder)
+        }
+    )}
+)
 
 Create-Object -Name bt_SourceNewFolder -Type Button -Data $ht_Data -Events $ar_Events -Control Form
 
@@ -1222,26 +1229,27 @@ Create-Object -Name bt_DestinationNewFolder -Type Button -Data $ht_Data -Events 
 # =============================================================
 
 $ht_Data = @{
-            Left = 10
-            Top = $tb_Source.Bounds.Bottom + 4
-            Width = $Form.ClientSize.Width - 20
-            BackColor = $TextBoxColor
-            DropDownStyle = [System.Windows.Forms.ComboBoxStyle]::DropDownList
-            FlatStyle = [System.Windows.Forms.FlatStyle]::Standard
-            Font = New-Object -TypeName System.Drawing.Font($FontName, $FontSize, $FontStyle)
-            Cursor = [System.Windows.Forms.Cursors]::Hand
-            }
+    Left = 10
+    Top = $tb_Source.Bounds.Bottom + 4
+    Width = $Form.ClientSize.Width - 20
+    BackColor = $TextBoxColor
+    DropDownStyle = [System.Windows.Forms.ComboBoxStyle]::DropDownList
+    FlatStyle = [System.Windows.Forms.FlatStyle]::Standard
+    Font = New-Object -TypeName System.Drawing.Font($FontName, $FontSize, $FontStyle)
+    Cursor = [System.Windows.Forms.Cursors]::Hand
+}
 
 $ar_Events = @(
-                {Add_SelectedIndexChanged(
-                    {
-                        $Global:SourcePath = $this.SelectedItem.Name
+    {Add_SelectedIndexChanged(
+        {
+            $Global:SourcePath = $this.SelectedItem.Name
 
-                        Munition-ComboBox -Name $this -Path $Global:SourcePath
+            Munition-ComboBox -Name $this -Path $Global:SourcePath
 
-                        $tb_Source.Text = $Global:SourcePath
-                    })}
-              )
+            $tb_Source.Text = $Global:SourcePath
+        }
+    )}
+)
 
 Create-Object -Name cb_Source -Type ComboBox -Data $ht_Data -Events $ar_Events -Control Form
 
@@ -1262,12 +1270,12 @@ Munition-ComboBox -Name $cb_Destination -Path $Global:DestinationPath
 # =============================================================
 
 $ht_Data = @{
-            Left = 10
-            Top = $lb_Options.Bounds.Bottom
-            Width = $Form.ClientSize.Width / 2 - 20
-            Height = 97
-            BorderStyle = [System.Windows.Forms.BorderStyle]::Fixed3D
-            }
+    Left = 10
+    Top = $lb_Options.Bounds.Bottom
+    Width = $Form.ClientSize.Width / 2 - 20
+    Height = 97
+    BorderStyle = [System.Windows.Forms.BorderStyle]::Fixed3D
+}
 
 Create-Object -Name pn_Panel -Type Panel -Data $ht_Data -Control Form
 
@@ -1276,12 +1284,12 @@ Create-Object -Name pn_Panel -Type Panel -Data $ht_Data -Control Form
 # =============================================================
 
 $ht_Data = @{
-            Left = 14
-            Top = [Math]::Round($pn_Panel.Bounds.Top + $pn_Panel.ClientSize.Height / 3)
-            Width = $pn_Panel.Width - 8
-            Height = 2
-            BorderStyle = [System.Windows.Forms.BorderStyle]::Fixed3D
-            }
+    Left = 14
+    Top = [Math]::Round($pn_Panel.Bounds.Top + $pn_Panel.ClientSize.Height / 3)
+    Width = $pn_Panel.Width - 8
+    Height = 2
+    BorderStyle = [System.Windows.Forms.BorderStyle]::Fixed3D
+}
 
 Create-Object -Name lb_Line1 -Type Label -Data $ht_Data -Control Form
 
@@ -1296,13 +1304,13 @@ Create-Object -Name lb_Line2 -Type Label -Data $ht_Data -Control Form
 # =============================================================
 
 $ht_Data = @{
-            Left = 20 - (($IconMax.Width - 16) / 2 )
-            Top = $pn_Panel.Bounds.Top + (10 - (($IconMax.Height - 16) / 2 ))
-            Width = 20
-            Height = 20
-            Image = $Icons.Copy_g
-            BorderStyle = [System.Windows.Forms.BorderStyle]::None
-            }
+    Left = 20 - (($IconMax.Width - 16) / 2 )
+    Top = $pn_Panel.Bounds.Top + (10 - (($IconMax.Height - 16) / 2 ))
+    Width = 20
+    Height = 20
+    Image = $Icons.Copy_g
+    BorderStyle = [System.Windows.Forms.BorderStyle]::None
+}
 
 Create-Object -Name pb_IconCopy -Type PictureBox -Data $ht_Data -Control Form
 
@@ -1325,13 +1333,13 @@ Create-Object -Name pb_IconReplace -Type PictureBox -Data $ht_Data -Control Form
 # =============================================================
 
 $ht_Data = @{
-            Left = 43
-            Top = $pn_Panel.Bounds.Top + 8
-            Width = $pn_Panel.Width - 40
-            Height = 20
-            Style = [System.Windows.Forms.ProgressBarStyle]::Blocks
-            Visible = $false
-            }
+    Left = 43
+    Top = $pn_Panel.Bounds.Top + 8
+    Width = $pn_Panel.Width - 40
+    Height = 20
+    Style = [System.Windows.Forms.ProgressBarStyle]::Blocks
+    Visible = $false
+}
 
 Create-Object -Name pb_Copy -Type ProgressBar -Data $ht_Data -Control Form
 
@@ -1362,58 +1370,72 @@ $pn_Panel.SendToBack()
 # =============================================================
 
 $ht_Data = @{
-            Left = $Form.ClientSize.Width / 2 + 10
-            Top = $lb_Options.Bounds.Bottom
-            Width = $Form.ClientSize.Width / 2 - 20
-            Height = 100
-            BackColor = [System.Drawing.Color]::Ivory
-            Font = New-Object -TypeName System.Drawing.Font($FontName, ($FontSize - 1), $FontStyle)
-            BorderStyle = [System.Windows.Forms.BorderStyle]::FixedSingle
-            CheckOnClick = $true
-            }
+    Left = $Form.ClientSize.Width / 2 + 10
+    Top = $lb_Options.Bounds.Bottom
+    Width = $Form.ClientSize.Width / 2 - 20
+    Height = 100
+    BackColor = [System.Drawing.Color]::Ivory
+    Font = New-Object -TypeName System.Drawing.Font($FontName, ($FontSize - 1), $FontStyle)
+    BorderStyle = [System.Windows.Forms.BorderStyle]::FixedSingle
+    CheckOnClick = $true
+}
 
 $ar_Events = @(
-                {Items.AddRange($Txt_List.clb_Box)}
-                {Add_SelectedIndexChanged(
-                    {
-                        $pb_Copy.Visible = $this.GetItemChecked(0)
-                        $pb_Remove.Visible = $this.GetItemChecked(1)
-                        $pb_Replace.Visible = $this.GetItemChecked(2)
+    {Items.AddRange($Txt_List.clb_Box)}
+    {Add_SelectedIndexChanged(
+        {
+            $pb_Copy.Visible = $this.GetItemChecked(0)
+            $pb_Remove.Visible = $this.GetItemChecked(1)
+            $pb_Replace.Visible = $this.GetItemChecked(2)
 
-                        If ($this.GetItemChecked(0))
-                            {$pb_IconCopy.Image = $Icons.Copy}
-                        Else
-                            {$pb_IconCopy.Image = $Icons.Copy_g}
+            If ($this.GetItemChecked(0))
+                {
+                    $pb_IconCopy.Image = $Icons.Copy
+                }
+            Else
+                {
+                    $pb_IconCopy.Image = $Icons.Copy_g
+                }
 
-                        If ($this.GetItemChecked(1))
-                            {$pb_IconRemove.Image = $Icons.Remove}
-                        Else
-                            {$pb_IconRemove.Image = $Icons.Remove_g}
+            If ($this.GetItemChecked(1))
+                {
+                    $pb_IconRemove.Image = $Icons.Remove
+                }
+            Else
+                {
+                    $pb_IconRemove.Image = $Icons.Remove_g
+                }
 
-                        If ($this.GetItemChecked(2))
-                            {$pb_IconReplace.Image = $Icons.Replace}
-                        Else
-                            {$pb_IconReplace.Image = $Icons.Replace_g}
-                    })}
-                {Add_ItemCheck(
-                    {
-                        If ($_.Index -eq 2)
-                            {
-                                If ($_.NewValue -eq [System.Windows.Forms.CheckState]::Unchecked)
-                                    {
-                                        $this.SetItemCheckState(3,[System.Windows.Forms.CheckState]::Unchecked)
-                                        $this.SetItemCheckState(4,[System.Windows.Forms.CheckState]::Unchecked)
-                                    }
-                            }
-                        ElseIf ($_.Index -in (3..4))
-                            {
-                                If ($this.GetItemCheckState(2) -ne [System.Windows.Forms.CheckState]::Checked)
-                                    {
-                                        $_.NewValue = [System.Windows.Forms.CheckState]::Unchecked
-                                    }
-                            }
-                    })}
-              )
+            If ($this.GetItemChecked(2))
+                {
+                    $pb_IconReplace.Image = $Icons.Replace
+                }
+            Else
+                {
+                    $pb_IconReplace.Image = $Icons.Replace_g
+                }
+        }
+    )}
+    {Add_ItemCheck(
+        {
+            If ($_.Index -eq 2)
+                {
+                    If ($_.NewValue -eq [System.Windows.Forms.CheckState]::Unchecked)
+                        {
+                            $this.SetItemCheckState(3,[System.Windows.Forms.CheckState]::Unchecked)
+                            $this.SetItemCheckState(4,[System.Windows.Forms.CheckState]::Unchecked)
+                        }
+                }
+            ElseIf ($_.Index -in (3..4))
+                {
+                    If ($this.GetItemCheckState(2) -ne [System.Windows.Forms.CheckState]::Checked)
+                        {
+                            $_.NewValue = [System.Windows.Forms.CheckState]::Unchecked
+                        }
+                }
+        }
+    )}
+)
 
 Create-Object -Name clb_Box -Type CheckedListBox -Data $ht_Data -Events $ar_Events -Control Form
 
@@ -1422,48 +1444,49 @@ Create-Object -Name clb_Box -Type CheckedListBox -Data $ht_Data -Events $ar_Even
 # =============================================================
 
 $ht_Data = @{
-            Left = 30
-            Top = $clb_Box.Bounds.Bottom + 26
-            Size = $ButtonSizeA
-            FlatStyle = [System.Windows.Forms.FlatStyle]::Popup
-            BackColor = $ButtonColor
-            Font = New-Object -TypeName System.Drawing.Font($FontName, $FontSize, $FontStyle)
-            Text = $Txt_List.bt_Copy
-            TextAlign = [System.Drawing.ContentAlignment]::MiddleCenter
-            Cursor = [System.Windows.Forms.Cursors]::Hand
-            }
+    Left = 30
+    Top = $clb_Box.Bounds.Bottom + 26
+    Size = $ButtonSizeA
+    FlatStyle = [System.Windows.Forms.FlatStyle]::Popup
+    BackColor = $ButtonColor
+    Font = New-Object -TypeName System.Drawing.Font($FontName, $FontSize, $FontStyle)
+    Text = $Txt_List.bt_Copy
+    TextAlign = [System.Drawing.ContentAlignment]::MiddleCenter
+    Cursor = [System.Windows.Forms.Cursors]::Hand
+}
 
 $ar_Events = @(
-                {Add_Click(
-                    {
-                        If ((Test-Root -Path $Global:SourcePath) -or (Test-Root -Path $Global:DestinationPath))
-                            {
-                                Write-Msg -TextBox $tb_Events -NL $true -Time $true -Count $false -Msg $Msg_List.NoDir
-                            }
-                        ElseIf (Test-Ident -PathA $Global:SourcePath -PathB $Global:DestinationPath)
-                            {
-                                Write-Msg -TextBox $tb_Events -NL $true -Time $true -Count $false -Msg $Msg_List.NoIdent
-                            }
-                        ElseIf (Test-Parent -PathA $Global:SourcePath -PathB $Global:DestinationPath)
-                            {
-                                Write-Msg -TextBox $tb_Events -NL $true -Time $true -Count $false -Msg $Msg_List.NoParent
-                            }
-                        ElseIf (Test-Empty -Path $Global:SourcePath)
-                            {
-                                Write-Msg -TextBox $tb_Events -NL $true -Time $true -Count $false -Msg $Msg_List.NoEmpty
-                            }
-                        ElseIf (!($clb_Box.GetItemChecked(0)) -and !($clb_Box.GetItemChecked(1)) -and !($clb_Box.GetItemChecked(2)))
-                            {
-                                Write-Msg -TextBox $tb_Events -NL $true -Time $true -Count $false -Msg $Msg_List.NoAction
-                            }
-                        ElseIf ($Copy_Form.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK)
-                            {
-                                $SyncHash.WriteMsg = (Get-Item "function:Write-Msg").ScriptBlock
-                                $SyncHash.Msg_List = $Msg_List
-                                Copy-Incremental -SyncHash $SyncHash -Copy $clb_Box.GetItemChecked(0) -Remove $clb_Box.GetItemChecked(1) -Replace $clb_Box.GetItemChecked(2) -Attributes $clb_Box.GetItemChecked(3) -Compare $clb_Box.GetItemChecked(4) -Sub $clb_Box.GetItemChecked(5) -HiddenF $clb_Box.GetItemChecked(6) -HiddenD $clb_Box.GetItemChecked(7) -OutFile $clb_Box.GetItemChecked(8) -SrcPath $Global:SourcePath -DstPath $Global:DestinationPath -OutPath $OutputFile
-                            }
-                    })}
-              )
+    {Add_Click(
+        {
+            If ((Test-Root -Path $Global:SourcePath) -or (Test-Root -Path $Global:DestinationPath))
+                {
+                    Write-Msg -TextBox $tb_Events -NL $true -Time $true -Count $false -Msg $Msg_List.NoDir
+                }
+            ElseIf (Test-Ident -PathA $Global:SourcePath -PathB $Global:DestinationPath)
+                {
+                    Write-Msg -TextBox $tb_Events -NL $true -Time $true -Count $false -Msg $Msg_List.NoIdent
+                }
+            ElseIf (Test-Parent -PathA $Global:SourcePath -PathB $Global:DestinationPath)
+                {
+                    Write-Msg -TextBox $tb_Events -NL $true -Time $true -Count $false -Msg $Msg_List.NoParent
+                }
+            ElseIf (Test-Empty -Path $Global:SourcePath)
+                {
+                    Write-Msg -TextBox $tb_Events -NL $true -Time $true -Count $false -Msg $Msg_List.NoEmpty
+                }
+            ElseIf (!($clb_Box.GetItemChecked(0)) -and !($clb_Box.GetItemChecked(1)) -and !($clb_Box.GetItemChecked(2)))
+                {
+                    Write-Msg -TextBox $tb_Events -NL $true -Time $true -Count $false -Msg $Msg_List.NoAction
+                }
+            ElseIf ($Copy_Form.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK)
+                {
+                    $SyncHash.WriteMsg = (Get-Item "function:Write-Msg").ScriptBlock
+                    $SyncHash.Msg_List = $Msg_List
+                    Copy-Incremental -SyncHash $SyncHash -Copy $clb_Box.GetItemChecked(0) -Remove $clb_Box.GetItemChecked(1) -Replace $clb_Box.GetItemChecked(2) -Attributes $clb_Box.GetItemChecked(3) -Compare $clb_Box.GetItemChecked(4) -Sub $clb_Box.GetItemChecked(5) -HiddenF $clb_Box.GetItemChecked(6) -HiddenD $clb_Box.GetItemChecked(7) -OutFile $clb_Box.GetItemChecked(8) -SrcPath $Global:SourcePath -DstPath $Global:DestinationPath -OutPath $OutputFile
+                }
+        }
+    )}
+)
 
 Create-Object -Name bt_Copy -Type Button -Data $ht_Data -Events $ar_Events -Control Form
 
@@ -1473,20 +1496,22 @@ $ht_Data.Left = $Form.ClientSize.Width / 2 - $ButtonSizeA.Width / 2
 $ht_Data.Text = $Txt_List.bt_All
 
 $ar_Events = @(
-                {Add_Click(
-                    {
-                        For($i = 0; $i -lt $clb_Box.Items.Count; $i++)
-                            {
-                                $clb_Box.SetItemChecked($i,$true)
-                            }
-                        $pb_Copy.Show()
-                        $pb_Remove.Show()
-                        $pb_Replace.Show()
-                        $pb_IconCopy.Image = $Icons.Copy
-                        $pb_IconRemove.Image = $Icons.Remove
-                        $pb_IconReplace.Image = $Icons.Replace
-                    })}
-              )
+    {Add_Click(
+        {
+            For($i = 0; $i -lt $clb_Box.Items.Count; $i++)
+                {
+                    $clb_Box.SetItemChecked($i,$true)
+                }
+
+            $pb_Copy.Show()
+            $pb_Remove.Show()
+            $pb_Replace.Show()
+            $pb_IconCopy.Image = $Icons.Copy
+            $pb_IconRemove.Image = $Icons.Remove
+            $pb_IconReplace.Image = $Icons.Replace
+        }
+    )}
+)
 
 Create-Object -Name bt_All -Type Button -Data $ht_Data -Events $ar_Events -Control Form
 
@@ -1510,27 +1535,28 @@ $SyncHash.bt_Exit = $bt_Exit
 # =============================================================
 
 $ht_Data = @{
-            ClientSize = [System.Drawing.Size]::new(600,300)
-            StartPosition = [System.Windows.Forms.FormStartPosition]::CenterScreen
-            Icon = $Paths.IconFolder + "Backup-Maker.ico"
-            Text = $Txt_List.Copy_Form
-            BackColor = $FormColor
-            FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::FixedSingle
-            MaximizeBox = $false
-            MinimizeBox = $false
-            ShowInTaskbar = $false
-            }
+    ClientSize = [System.Drawing.Size]::new(600,300)
+    StartPosition = [System.Windows.Forms.FormStartPosition]::CenterScreen
+    Icon = $Paths.IconFolder + "Backup-Maker.ico"
+    Text = $Txt_List.Copy_Form
+    BackColor = $FormColor
+    FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::FixedSingle
+    MaximizeBox = $false
+    MinimizeBox = $false
+    ShowInTaskbar = $false
+}
 
 $ar_Events = @(
-                {Add_Load(
-                    {
-                        $Form.TopMost = $false
-                        $this.TopMost = $true
-                        $this.ActiveControl = $bt_Cancel
-                        $tb_Synopsis.Text = Fill-Synopsis -Synopsis $Synopsis -List $Synopsis_List -SrcPath $Global:SourcePath -DstPath $Global:DestinationPath -Copy $clb_Box.GetItemChecked(0) -Remove $clb_Box.GetItemChecked(1) -Replace $clb_Box.GetItemChecked(2) -Attributes $clb_Box.GetItemChecked(3) -Compare $clb_Box.GetItemChecked(4) -Sub $clb_Box.GetItemChecked(5) -HiddenF $clb_Box.GetItemChecked(6) -HiddenD $clb_Box.GetItemChecked(7) -OutFile $clb_Box.GetItemChecked(8)
-                    })}
-                {Add_FormClosed({$Form.TopMost = $true})}
-              )
+    {Add_Load(
+        {
+            $Form.TopMost = $false
+            $this.TopMost = $true
+            $this.ActiveControl = $bt_Cancel
+            $tb_Synopsis.Text = Fill-Synopsis -Synopsis $Synopsis -List $Synopsis_List -SrcPath $Global:SourcePath -DstPath $Global:DestinationPath -Copy $clb_Box.GetItemChecked(0) -Remove $clb_Box.GetItemChecked(1) -Replace $clb_Box.GetItemChecked(2) -Attributes $clb_Box.GetItemChecked(3) -Compare $clb_Box.GetItemChecked(4) -Sub $clb_Box.GetItemChecked(5) -HiddenF $clb_Box.GetItemChecked(6) -HiddenD $clb_Box.GetItemChecked(7) -OutFile $clb_Box.GetItemChecked(8)
+        }
+    )}
+    {Add_FormClosed({$Form.TopMost = $true})}
+)
 
 Create-Object -Name Copy_Form -Type Form -Data $ht_Data -Events $ar_Events
 
@@ -1539,13 +1565,13 @@ Create-Object -Name Copy_Form -Type Form -Data $ht_Data -Events $ar_Events
 # =============================================================
 
 $ht_Data = @{
-            Left = 10
-            Top = 10
-            Width = $Copy_Form.ClientSize.Width - 20
-            Text = $Txt_List.lb_Synopsis
-            Font = New-Object -TypeName System.Drawing.Font($FontName, ($FontSize + 1), $FontStyle)
-            TextAlign = [System.Drawing.ContentAlignment]::MiddleCenter
-            }
+    Left = 10
+    Top = 10
+    Width = $Copy_Form.ClientSize.Width - 20
+    Text = $Txt_List.lb_Synopsis
+    Font = New-Object -TypeName System.Drawing.Font($FontName, ($FontSize + 1), $FontStyle)
+    TextAlign = [System.Drawing.ContentAlignment]::MiddleCenter
+}
 
 Create-Object -Name lb_Synopsis -Type Label -Data $ht_Data -Control Copy_Form
 
@@ -1554,18 +1580,18 @@ Create-Object -Name lb_Synopsis -Type Label -Data $ht_Data -Control Copy_Form
 # =============================================================
 
 $ht_Data = @{
-            Left = 10
-            Top = $lb_Synopsis.Bounds.Bottom + 4
-            Width = $Copy_Form.ClientSize.Width - 20
-            Height = $Copy_Form.ClientSize.Height - $lb_Synopsis.Bounds.Bottom - 70
-            Font = New-Object -TypeName System.Drawing.Font($FontName, $FontSize, $FontStyle)
-            BackColor = $TextBoxColor
-            Cursor = [System.Windows.Forms.Cursors]::IBeam
-            ReadOnly = $true
-            Multiline = $true
-            ScrollBars = [System.Windows.Forms.ScrollBars]::Vertical
-            WordWrap = $true
-            }
+    Left = 10
+    Top = $lb_Synopsis.Bounds.Bottom + 4
+    Width = $Copy_Form.ClientSize.Width - 20
+    Height = $Copy_Form.ClientSize.Height - $lb_Synopsis.Bounds.Bottom - 70
+    Font = New-Object -TypeName System.Drawing.Font($FontName, $FontSize, $FontStyle)
+    BackColor = $TextBoxColor
+    Cursor = [System.Windows.Forms.Cursors]::IBeam
+    ReadOnly = $true
+    Multiline = $true
+    ScrollBars = [System.Windows.Forms.ScrollBars]::Vertical
+    WordWrap = $true
+}
 
 Create-Object -Name tb_Synopsis -Type TextBox -Data $ht_Data -Control Copy_Form
 
@@ -1574,17 +1600,17 @@ Create-Object -Name tb_Synopsis -Type TextBox -Data $ht_Data -Control Copy_Form
 # =============================================================
 
 $ht_Data = @{
-            Left = 60
-            Top = $tb_Synopsis.Bounds.Bottom + 20
-            Size = $ButtonSizeC
-            FlatStyle = [System.Windows.Forms.FlatStyle]::Popup
-            BackColor = $ButtonColor
-            Font = New-Object -TypeName System.Drawing.Font($FontName, $FontSize, $FontStyle)
-            Text = $Txt_List.bt_OK
-            TextAlign = [System.Drawing.ContentAlignment]::MiddleCenter
-            Cursor = [System.Windows.Forms.Cursors]::Hand
-            DialogResult = [System.Windows.Forms.DialogResult]::OK
-            }
+    Left = 60
+    Top = $tb_Synopsis.Bounds.Bottom + 20
+    Size = $ButtonSizeC
+    FlatStyle = [System.Windows.Forms.FlatStyle]::Popup
+    BackColor = $ButtonColor
+    Font = New-Object -TypeName System.Drawing.Font($FontName, $FontSize, $FontStyle)
+    Text = $Txt_List.bt_OK
+    TextAlign = [System.Drawing.ContentAlignment]::MiddleCenter
+    Cursor = [System.Windows.Forms.Cursors]::Hand
+    DialogResult = [System.Windows.Forms.DialogResult]::OK
+}
 
 Create-Object -Name bt_OK -Type Button -Data $ht_Data -Control Copy_Form
 
@@ -1606,26 +1632,27 @@ $Copy_Form.CancelButton = $bt_Cancel
 # =============================================================
 
 $ht_Data = @{
-            ClientSize = [System.Drawing.Size]::new(600,240)
-            StartPosition = [System.Windows.Forms.FormStartPosition]::CenterScreen
-            Icon = $Paths.IconFolder + "Backup-Maker.ico"
-            Text = $Txt_List.DiskSpace_Form
-            BackColor = $FormColor
-            FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::FixedSingle
-            MaximizeBox = $false
-            MinimizeBox = $false
-            ShowInTaskbar = $false
-            }
+    ClientSize = [System.Drawing.Size]::new(600,240)
+    StartPosition = [System.Windows.Forms.FormStartPosition]::CenterScreen
+    Icon = $Paths.IconFolder + "Backup-Maker.ico"
+    Text = $Txt_List.DiskSpace_Form
+    BackColor = $FormColor
+    FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::FixedSingle
+    MaximizeBox = $false
+    MinimizeBox = $false
+    ShowInTaskbar = $false
+}
 
 $ar_Events = @(
-                {Add_Load(
-                    {
-                        $Form.TopMost = $false
-                        $this.TopMost = $true
-                        $this.ActiveControl = $bt_Skip
-                    })}
-                {Add_FormClosed({$Form.TopMost = $true})}
-              )
+    {Add_Load(
+        {
+            $Form.TopMost = $false
+            $this.TopMost = $true
+            $this.ActiveControl = $bt_Skip
+        }
+    )}
+    {Add_FormClosed({$Form.TopMost = $true})}
+)
 
 Create-Object -Name DiskSpace_Form -Type Form -Data $ht_Data -Events $ar_Events
 
@@ -1638,14 +1665,14 @@ $SyncHash.DiskSpace_Form = $DiskSpace_Form
 # =============================================================
 
 $ht_Data = @{
-            Left = 10
-            Top = 10
-            Width = $DiskSpace_Form.ClientSize.Width - 20
-            Height = 160
-            Font = New-Object -TypeName System.Drawing.Font($FontName, $FontSize, $FontStyle)
-            Text = $Txt_List.lb_DiskSpace
-            TextAlign = [System.Drawing.ContentAlignment]::MiddleCenter
-            }
+    Left = 10
+    Top = 10
+    Width = $DiskSpace_Form.ClientSize.Width - 20
+    Height = 160
+    Font = New-Object -TypeName System.Drawing.Font($FontName, $FontSize, $FontStyle)
+    Text = $Txt_List.lb_DiskSpace
+    TextAlign = [System.Drawing.ContentAlignment]::MiddleCenter
+}
 
 Create-Object -Name lb_DiskSpace -Type Label -Data $ht_Data -Control DiskSpace_Form
 
@@ -1658,17 +1685,17 @@ $SyncHash.lb_DiskSpace = $lb_DiskSpace
 # =============================================================
 
 $ht_Data = @{
-            Left = 60
-            Top = $lb_DiskSpace.Bounds.Bottom + 20
-            Size = $ButtonSizeD
-            FlatStyle = [System.Windows.Forms.FlatStyle]::Popup
-            BackColor = $ButtonColor
-            Font = New-Object -TypeName System.Drawing.Font($FontName, $FontSize, $FontStyle)
-            Text = $Txt_List.bt_Retry
-            TextAlign = [System.Drawing.ContentAlignment]::MiddleCenter
-            Cursor = [System.Windows.Forms.Cursors]::Hand
-            DialogResult = [System.Windows.Forms.DialogResult]::Retry
-            }
+    Left = 60
+    Top = $lb_DiskSpace.Bounds.Bottom + 20
+    Size = $ButtonSizeD
+    FlatStyle = [System.Windows.Forms.FlatStyle]::Popup
+    BackColor = $ButtonColor
+    Font = New-Object -TypeName System.Drawing.Font($FontName, $FontSize, $FontStyle)
+    Text = $Txt_List.bt_Retry
+    TextAlign = [System.Drawing.ContentAlignment]::MiddleCenter
+    Cursor = [System.Windows.Forms.Cursors]::Hand
+    DialogResult = [System.Windows.Forms.DialogResult]::Retry
+}
 
 Create-Object -Name bt_Retry -Type Button -Data $ht_Data -Control DiskSpace_Form
 

@@ -33,7 +33,12 @@ $Global:Path = "$env:ProgramFiles\PowerShellTools\Backup-Maker"
 $Global:Desktop = "$env:USERPROFILE\Desktop\Backup-Maker.lnk"
 $Global:StartMenu = "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\PowerShellTools\Backup-Maker\Backup-Maker.lnk"
 $Global:Uninstall = "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\PowerShellTools\Backup-Maker\Uninstall (Backup-Maker).lnk"
-$Global:Content = @("IconFolder = $Global:Path\Icons\")
+
+$Global:Content = @(
+    "[Paths]"
+    ";**Paths to Files and Folders"
+    "IconFolder = $Global:Path\Icons\"
+)
 
 $Txt_List = @{
     Form       = "Installer for Backup-Maker"
@@ -361,7 +366,11 @@ $ar_Events = @(
                 {
                     $Global:Path = $Folder.SelectedPath
                     $this.Text = $Global:Path
-                    $Global:Content = @("IconFolder = $Global:Path\Icons\")
+                    $Global:Content = @(
+                        "[Paths]"
+                        ";**Paths to Files and Folders"
+                        "IconFolder = $Global:Path\Icons\"
+                    )
                 }
         }
     )}
