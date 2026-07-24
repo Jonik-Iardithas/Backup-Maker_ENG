@@ -91,7 +91,17 @@ $Icons_List = @{
     Replace   = "$env:windir\system32\shell32.dll|295"
 }
 
-$Synopsis_List = @(("NOT BE COPIED","BE COPIED"),("NOT BE DELETED","BE DELETED"),("NOT BE REPLACED","BE REPLACED"),("NOT","ADDITIONALLY"),("NOT","ADDITIONALLY"),("NOT INCLUDE","INCLUDE"),("NOT","ALSO"),("NOT","ALSO"),("WILL NOT BE","WILL BE"))
+$Synopsis_List = @{
+    Copy       = @("NOT BE COPIED","BE COPIED")
+    Remove     = @("NOT BE DELETED","BE DELETED")
+    Replace    = @("NOT BE REPLACED","BE REPLACED")
+    Attributes = @("NOT","ADDITIONALLY")
+    Compare    = @("NOT","ADDITIONALLY")
+    Sub        = @("NOT INCLUDE","INCLUDE")
+    HiddenF    = @("NOT","ALSO")
+    HiddenD    = @("NOT","ALSO")
+    OutFile    = @("WILL NOT BE","WILL BE")
+}
 
 $Synopsis = "Source directory: {0}" + $NL +
             "Destination directory: {1}" + $NL + $NL +
@@ -580,7 +590,7 @@ function Copy-Incremental ([HashTable]$SyncHash, [bool]$Copy, [bool]$Remove, [bo
                                     {
                                         $ToReplaceF += @($i)
                                     }
-                                ElseIf ($Compare -and ([System.Convert]::ToBase64String($SHA.ComputeHash([System.IO.File]::ReadAllBytes($i.Src.Name))) -ne [System.Convert]::ToBase64String($SHA.ComputeHash([System.IO.File]::ReadAllBytes($i.Dst.Name)))))
+                                ElseIf ($Compare -and ([System.Convert]::ToBase64String($SHA.ComputeHash([System.IO.FileStream]::new($i.Src.Name,[System.IO.FileMode]::Open))) -ne [System.Convert]::ToBase64String($SHA.ComputeHash([System.IO.FileStream]::new($i.Dst.Name,[System.IO.FileMode]::Open)))))
                                     {
                                         $ToReplaceF += @($i)
                                     }
@@ -678,7 +688,7 @@ function Copy-Incremental ([HashTable]$SyncHash, [bool]$Copy, [bool]$Remove, [bo
                                 ForEach($i in $ToCopyD)
                                     {
                                         Copy-Item -LiteralPath $i.Src.Name -Destination $i.Dst.Name -Force
-                                        Set-ItemProperty -LiteralPath $i.Dst.Name -Name Attributes -Value $i.Src.Attributes
+                                        Set-ItemProperty -LiteralPath $i.Dst.Name -Name Attributes -Value $i.Src.Attributes -Force
 
                                         $Percent = ($ToCopyD.IndexOf($i) / ($ToCopyD.Count + $ToCopyF.Count)) * 100
                                         $SyncHash.pb_Copy.Value = $Percent
@@ -687,6 +697,7 @@ function Copy-Incremental ([HashTable]$SyncHash, [bool]$Copy, [bool]$Remove, [bo
                                 ForEach($i in $ToCopyF)
                                     {
                                         Copy-Item -LiteralPath $i.Src.Name -Destination $i.Dst.Name -Force
+                                        Set-ItemProperty -LiteralPath $i.Dst.Name -Name Attributes -Value $i.Src.Attributes -Force
 
                                         $Percent = (($ToCopyF.IndexOf($i) + $ToCopyD.Count) / ($ToCopyD.Count + $ToCopyF.Count)) * 100
                                         $SyncHash.pb_Copy.Value = $Percent
@@ -805,6 +816,7 @@ function Copy-Incremental ([HashTable]$SyncHash, [bool]$Copy, [bool]$Remove, [bo
                                 ForEach($i in $ToReplaceF)
                                     {
                                         Copy-Item -LiteralPath $i.Src.Name -Destination $i.Dst.Name -Force
+                                        Set-ItemProperty -LiteralPath $i.Dst.Name -Name Attributes -Value $i.Src.Attributes -Force
 
                                         $Percent = ($ToReplaceF.IndexOf($i) / ($ToReplaceF.Count + $ToReplaceD.Count)) * 100
                                         $SyncHash.pb_Replace.Value = $Percent
@@ -812,8 +824,8 @@ function Copy-Incremental ([HashTable]$SyncHash, [bool]$Copy, [bool]$Remove, [bo
 
                                 ForEach($i in $ToReplaceD)
                                     {
-                                        Set-ItemProperty -LiteralPath $i.Dst.Name -Name LastWriteTime -Value $i.Src.Time
-                                        Set-ItemProperty -LiteralPath $i.Dst.Name -Name Attributes -Value $i.Src.Attributes
+                                        Set-ItemProperty -LiteralPath $i.Dst.Name -Name LastWriteTime -Value $i.Src.Time -Force
+                                        Set-ItemProperty -LiteralPath $i.Dst.Name -Name Attributes -Value $i.Src.Attributes -Force
 
                                         $Percent = (($ToReplaceD.IndexOf($i) + $ToReplaceF.Count) / ($ToReplaceF.Count + $ToReplaceD.Count)) * 100
                                         $SyncHash.pb_Replace.Value = $Percent
@@ -937,7 +949,6 @@ function Munition-ComboBox ([object]$Name, [string]$Path)
                                 [void]$Name.Items.Add([PSCustomObject]@{Name = $i.Root; DisplayName = $i.Root})
                             }
                     }
-
             }
 
         $Name.DisplayMember = 'DisplayName'
@@ -964,28 +975,16 @@ function Reverse-Me ([object]$Button, [object]$TextBox, [string]$Path)
 
 # -------------------------------------------------------------
 
-function Fill-Synopsis ([string]$Synopsis, [array]$List, [string]$SrcPath, [string]$DstPath, [bool]$Copy, [bool]$Remove, [bool]$Replace, [bool]$Attributes, [bool]$Compare, [bool]$Sub, [bool]$HiddenF, [bool]$HiddenD, [bool]$OutFile)
+function Fill-Synopsis ([string]$Synopsis, [HashTable]$List, [string]$SrcPath, [string]$DstPath, [bool]$Copy, [bool]$Remove, [bool]$Replace, [bool]$Attributes, [bool]$Compare, [bool]$Sub, [bool]$HiddenF, [bool]$HiddenD, [bool]$OutFile)
     {
-        $Table = @{
-            0 = $Copy
-            1 = $Remove
-            2 = $Replace
-            3 = $Attributes
-            4 = $Compare
-            5 = $Sub
-            6 = $HiddenF
-            7 = $HiddenD
-            8 = $OutFile
-        }
+        $HT = [HashTable]::new(0)
 
-        $Var = @($SrcPath,$DstPath)
-
-        For($i = 0; $i -lt $List.Count; $i++)
+        ForEach ($i in $List.Keys)
             {
-                $Var += @($List[$i][[int]$Table[$i]])
+                $HT.$i = $List.$i[[int]$PSBoundParameters.$i]
             }
 
-        return $Synopsis -f $Var
+        return $Synopsis -f $SrcPath, $DstPath, $HT.Copy, $HT.Remove, $HT.Replace, $HT.Attributes, $HT.Compare, $HT.Sub, $HT.HiddenF, $HT.HiddenD, $HT.OutFile
     }
 
 # =============================================================
@@ -1536,7 +1535,7 @@ $SyncHash.bt_Exit = $bt_Exit
 
 $ht_Data = @{
     ClientSize = [System.Drawing.Size]::new(600,300)
-    StartPosition = [System.Windows.Forms.FormStartPosition]::CenterScreen
+    StartPosition = [System.Windows.Forms.FormStartPosition]::CenterParent
     Icon = $Paths.IconFolder + "Backup-Maker.ico"
     Text = $Txt_List.Copy_Form
     BackColor = $FormColor
@@ -1633,7 +1632,7 @@ $Copy_Form.CancelButton = $bt_Cancel
 
 $ht_Data = @{
     ClientSize = [System.Drawing.Size]::new(600,240)
-    StartPosition = [System.Windows.Forms.FormStartPosition]::CenterScreen
+    StartPosition = [System.Windows.Forms.FormStartPosition]::CenterParent
     Icon = $Paths.IconFolder + "Backup-Maker.ico"
     Text = $Txt_List.DiskSpace_Form
     BackColor = $FormColor
