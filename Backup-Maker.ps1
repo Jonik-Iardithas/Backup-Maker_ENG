@@ -590,9 +590,21 @@ function Copy-Incremental ([HashTable]$SyncHash, [bool]$Copy, [bool]$Remove, [bo
                                     {
                                         $ToReplaceF += @($i)
                                     }
-                                ElseIf ($Compare -and ([System.Convert]::ToBase64String($SHA.ComputeHash([System.IO.FileStream]::new($i.Src.Name,[System.IO.FileMode]::Open))) -ne [System.Convert]::ToBase64String($SHA.ComputeHash([System.IO.FileStream]::new($i.Dst.Name,[System.IO.FileMode]::Open)))))
+                                ElseIf ($Compare)
                                     {
-                                        $ToReplaceF += @($i)
+                                        $StreamA = [System.IO.FileStream]::new($i.Src.Name,[System.IO.FileMode]::Open)
+                                        $StreamB = [System.IO.FileStream]::new($i.Dst.Name,[System.IO.FileMode]::Open)
+
+                                        If ([System.Convert]::ToBase64String($SHA.ComputeHash($StreamA)) -ne [System.Convert]::ToBase64String($SHA.ComputeHash($StreamB)))
+                                            {
+                                                $ToReplaceF += @($i)
+                                            }
+
+                                        $StreamA.Close()
+                                        $StreamA.Dispose()
+
+                                        $StreamB.Close()
+                                        $StreamB.Dispose()
                                     }
 
                                 $Percent = ($TimeCmpF.IndexOf($i) / ($TimeCmpF.Count + $TimeCmpD.Count)) * 100
