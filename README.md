@@ -24,6 +24,15 @@ A final note on my own account: I'm just a self-taught hobby programmer, not a p
 
 ---
 
+**Update 24.07.2026:**
+
+* The comparison of file content now also works with large files (greater than 2 GB). So far the algorithm abandoned with an error in such cases. Nevertheless let it be known that comparison of file content is a time- and resource-consuming matter and is only advised for manageable quantities of data.
+* All forms now open centered in reference to the main form, instead of referring to the center of the screen.
+* Special attribute flags are also copied now. So far the copy was lacking them, because Windows does not set certain attribute flags like "normal" by default.
+* Did some code cosmetics.
+
+---
+
 The following files are created resp. copied during the installation process:
 
 Ini-files:
