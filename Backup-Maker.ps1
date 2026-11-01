@@ -991,9 +991,12 @@ function Fill-Synopsis ([string]$Synopsis, [HashTable]$List, [string]$SrcPath, [
     {
         $HT = [HashTable]::new(0)
 
-        ForEach ($i in $List.Keys)
+        ForEach ($i in $PSBoundParameters.Keys)
             {
-                $HT.$i = $List.$i[[int]$PSBoundParameters.$i]
+                If ($List.ContainsKey($i))
+                    {
+                        $HT.$i = $List.$i[[int]$PSBoundParameters.$i]
+                    }
             }
 
         return $Synopsis -f $SrcPath, $DstPath, $HT.Copy, $HT.Remove, $HT.Replace, $HT.Attributes, $HT.Compare, $HT.Sub, $HT.HiddenF, $HT.HiddenD, $HT.OutFile
